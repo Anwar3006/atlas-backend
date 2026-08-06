@@ -1,0 +1,104 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # GHCR/Docker image names must be lowercase; github.repository preserves
+      # whatever case the owner/repo actually has on GitHub.
+      - name: Compute lowercase image name
+        id: image
+        run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      # --- 1. Trivy filesystem scan ---
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+
+      # --- 2. OWASP Dependency-Check ---
+      - name: OWASP Dependency-Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: atlas-backend
+          path: .
+          format: HTML
+          args: >
+            --failOnCVSS 7
+            --nvdApiKey ${{ secrets.NVD_API_KEY }}
+
+      # --- 3. SonarCloud scan ---
+      - name: SonarCloud scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: SonarCloud Quality Gate
+        uses: SonarSource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # --- 4. Build the Docker image (not pushed yet -- the image scan below gates the push) ---
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # --- 5. Trivy image scan ---
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: image
+          image-ref: ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:${{ github.sha }}
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # --- 6. Push the image to GHCR, tagged with the commit SHA ---
+      - name: Push image
+        run: docker push ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:${{ github.sha }}
+
+      # --- 7. Deploy: SSH into the VPS as the low-privilege `deploy` user (A7) ---
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: deploy
+          key: ${{ secrets.VPS_DEPLOY_SSH_KEY }}
+          script: |
+            export KUBECONFIG=/home/deploy/.kube/config
+            kubectl set image deployment/backend backend=${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:${{ github.sha }} -n atlas
+            kubectl rollout status deployment/backend -n atlas --timeout=120s

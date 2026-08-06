@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: atlas
+  labels:
+    app: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          # Story 10's CI/CD pipeline overwrites this tag on every deploy via
+          # `kubectl set image deployment/backend backend=ghcr.io/anwar3006/atlas-backend:<sha>`.
+          # GHCR/Docker image names must be lowercase, hence "anwar3006" not "Anwar3006".
+          image: ghcr.io/anwar3006/atlas-backend:latest
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            # Created by Story 8: keys DATABASE_URL, REDIS_URL, and any
+            # API keys the backend needs (OpenAI, etc., added Epic by Epic).
+            - secretRef:
+                name: atlas-backend-secret
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: atlas
+  labels:
+    app: backend
+spec:
+  selector:
+    app: backend
+  ports:
+    - port: 80
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: backend
+  namespace: atlas
+spec:
+  ingressClassName: traefik
+  tls:
+    # Secret created by hand in Story 5 from the Cloudflare Origin CA cert (A30)
+    - hosts:
+        - api.atlas.curiousfellow.top
+      secretName: atlas-origin-tls
+  rules:
+    - host: api.atlas.curiousfellow.top
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 80
