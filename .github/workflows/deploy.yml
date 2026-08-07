@@ -106,3 +106,21 @@ jobs:
             export KUBECONFIG=/home/deploy/.kube/config
             kubectl set image deployment/backend backend=${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:${{ github.sha }} -n atlas
             kubectl rollout status deployment/backend -n atlas --timeout=120s
+
+      # --- Slack notification: reports this job's own outcome, so it must be
+      # the last step -- if: always() makes it run even if an earlier step
+      # (a failed scan, a broken deploy) stopped the job early. Uses job.status,
+      # not needs.<job>.result -- that cross-job pattern isn't documented for
+      # this action; job.status is its own README example and correctly
+      # reflects this job's accumulated status by this point regardless of
+      # which earlier step failed.
+      - name: Notify Slack
+        if: always()
+        uses: ravsamhq/notify-slack-action@v2.5.0
+        with:
+          status: ${{ job.status }}
+          notification_title: "{workflow} has {status_message}"
+          message_format: "{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>"
+          footer: "<{workflow_url}|View Workflow>"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
