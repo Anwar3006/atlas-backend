@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # GHCR/Docker image names must be lowercase; github.repository preserves
       # whatever case the owner/repo actually has on GitHub.
@@ -46,24 +46,27 @@ jobs:
             --nvdApiKey ${{ secrets.NVD_API_KEY }}
 
       # --- 3. SonarCloud scan ---
+      # sonarcloud-github-action is deprecated; sonarqube-scan-action is its
+      # drop-in replacement (works for SonarCloud with no SONAR_HOST_URL needed,
+      # as long as sonar-project.properties has sonar.organization + sonar.projectKey).
       - name: SonarCloud scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@v8.2.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: SonarCloud Quality Gate
-        uses: SonarSource/sonarqube-quality-gate-action@master
+        uses: SonarSource/sonarqube-quality-gate-action@v1.2.1
         timeout-minutes: 5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4.2.0
 
       # --- 4. Build the Docker image (not pushed yet -- the image scan below gates the push) ---
       - name: Build image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7.3.0
         with:
           context: .
           push: false
@@ -82,7 +85,7 @@ jobs:
           exit-code: "1"
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4.6.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -94,7 +97,7 @@ jobs:
 
       # --- 7. Deploy: SSH into the VPS as the low-privilege `deploy` user (A7) ---
       - name: Deploy to VPS
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.VPS_HOST }}
           username: deploy
