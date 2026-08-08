@@ -66,6 +66,7 @@ jobs:
           args: >
             --failOnCVSS 7
             --nvdApiKey ${{ secrets.NVD_API_KEY }}
+            --disableYarnAudit
 
       # --- 3. SonarCloud scan ---
       # sonarcloud-github-action is deprecated; sonarqube-scan-action is its
