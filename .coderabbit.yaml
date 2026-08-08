@@ -1,0 +1,35 @@
+language: en-US
+reviews:
+  profile: chill
+  path_filters:
+    - "!dist/**"
+    - "!coverage/**"
+    - "!node_modules/**"
+    - "!pnpm-lock.yaml"
+    - "!client/pnpm-lock.yaml"
+    - "!client/dist/**"
+  path_instructions:
+    - path: "src/api/routes/**"
+      instructions: >
+        Routes should stay thin: OpenAPI route definitions (createRoute) and
+        Zod schemas only. Business logic belongs in controllers/services, not
+        here.
+    - path: "src/db/**"
+      instructions: >
+        Flag any raw SQL string concatenation (Drizzle's query builder should
+        be used instead) and any schema change that isn't paired with a
+        generated migration.
+    - path: "k8s/**"
+      instructions: >
+        Flag hardcoded secrets, image tags that aren't the CI-managed
+        placeholder pattern, or resource requests/limits that look
+        copy-pasted without justification.
+    - path: ".github/workflows/**"
+      instructions: >
+        Verify every `uses:` action reference is pinned to a real, existing
+        tag rather than assumed, and that no step could leak a secret value
+        into logs.
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
