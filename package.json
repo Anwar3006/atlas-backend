@@ -20,9 +20,12 @@
   "type": "module",
   "dependencies": {
     "@hono/node-server": "^2.1.0",
+    "@hono/swagger-ui": "^0.6.1",
+    "@hono/zod-openapi": "^1.5.1",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.13.0",
-    "postgres": "^3.4.9"
+    "postgres": "^3.4.9",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

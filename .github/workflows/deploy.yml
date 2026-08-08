@@ -114,17 +114,65 @@ jobs:
           kubectl set image deployment/backend backend=${{ needs.scan-and-build.outputs.image }} -n atlas
           kubectl rollout status deployment/backend -n atlas --timeout=120s
 
-  # Reports the combined outcome of both jobs above, regardless of which one
-  # failed (or whether deploy was skipped because scan-and-build failed first).
+  # A12: generated from the just-deployed live spec (not the local build), so
+  # the published client always reflects what's actually running -- hence
+  # needing deploy to have succeeded first, not just scan-and-build.
+  publish-client:
+    needs: deploy
+    if: needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com
+          scope: "@anwar3006"
+
+      - name: Install client scaffold dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Generate TypeScript client with hey-api
+        working-directory: client
+        env:
+          OPENAPI_SPEC_URL: https://atlas-api.curiousfellow.top/openapi.json
+        run: npm run generate
+
+      - name: Build
+        working-directory: client
+        run: npm run build
+
+      # Every publish needs a unique version; tie it to the commit so mobile
+      # can pin an exact backend commit's client (A12: "bumps the version
+      # whenever it wants to pick up backend changes").
+      - name: Set package version to commit SHA
+        working-directory: client
+        run: npm version "0.0.0-${{ github.sha }}" --no-git-tag-version
+
+      - name: Publish to GitHub Packages
+        working-directory: client
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Reports the combined outcome of the jobs above, regardless of which one
+  # failed (or whether a later job was skipped because an earlier one failed).
   notify:
-    needs: [scan-and-build, deploy]
+    needs: [scan-and-build, deploy, publish-client]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Notify Slack
         uses: ravsamhq/notify-slack-action@2.5.0
         with:
-          status: ${{ (needs.scan-and-build.result == 'success' && needs.deploy.result == 'success') && 'success' || 'failure' }}
+          status: ${{ (needs.scan-and-build.result == 'success' && needs.deploy.result == 'success' && needs.publish-client.result == 'success') && 'success' || 'failure' }}
           notification_title: "{workflow} has {status_message}"
           message_format: "{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>"
           footer: "<{workflow_url}|View Workflow>"

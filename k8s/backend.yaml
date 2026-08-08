@@ -73,10 +73,10 @@ spec:
   tls:
     # Secret created by hand in Story 5 from the Cloudflare Origin CA cert (A30)
     - hosts:
-        - api.atlas.curiousfellow.top
+        - atlas-api.curiousfellow.top
       secretName: atlas-origin-tls
   rules:
-    - host: api.atlas.curiousfellow.top
+    - host: atlas-api.curiousfellow.top
       http:
         paths:
           - path: /
