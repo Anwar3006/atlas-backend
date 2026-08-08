@@ -29,6 +29,24 @@ jobs:
         id: image
         run: echo "ref=${REGISTRY}/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]'):${{ github.sha }}" >> "$GITHUB_OUTPUT"
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6.0.10
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Tests run before any scan -- fail fast on broken code, and this is
+      # also what generates coverage/lcov.info for the SonarCloud step below
+      # (sonar-project.properties points at it via sonar.javascript.lcov.reportPaths).
+      - name: Run tests with coverage
+        run: pnpm test:coverage
+
       # --- 1. Trivy filesystem scan ---
       - name: Trivy filesystem scan
         uses: aquasecurity/trivy-action@v0.36.0
