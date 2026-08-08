@@ -13,17 +13,21 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  deploy:
+  # Everything up through pushing the image runs on GitHub-hosted runners --
+  # no VPS network access needed for any of this.
+  scan-and-build:
     runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.image.outputs.ref }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
       # GHCR/Docker image names must be lowercase; github.repository preserves
       # whatever case the owner/repo actually has on GitHub.
-      - name: Compute lowercase image name
+      - name: Compute image reference
         id: image
-        run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+        run: echo "ref=${REGISTRY}/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]'):${{ github.sha }}" >> "$GITHUB_OUTPUT"
 
       # --- 1. Trivy filesystem scan ---
       - name: Trivy filesystem scan
@@ -71,7 +75,7 @@ jobs:
           context: .
           push: false
           load: true
-          tags: ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:${{ github.sha }}
+          tags: ${{ steps.image.outputs.ref }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -80,7 +84,7 @@ jobs:
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: image
-          image-ref: ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:${{ github.sha }}
+          image-ref: ${{ steps.image.outputs.ref }}
           severity: CRITICAL,HIGH
           exit-code: "1"
 
@@ -93,32 +97,34 @@ jobs:
 
       # --- 6. Push the image to GHCR, tagged with the commit SHA ---
       - name: Push image
-        run: docker push ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:${{ github.sha }}
+        run: docker push ${{ steps.image.outputs.ref }}
 
-      # --- 7. Deploy: SSH into the VPS as the low-privilege `deploy` user (A7) ---
-      - name: Deploy to VPS
-        uses: appleboy/ssh-action@v1.2.5
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: deploy
-          key: ${{ secrets.VPS_DEPLOY_SSH_KEY }}
-          script: |
-            export KUBECONFIG=/home/deploy/.kube/config
-            kubectl set image deployment/backend backend=${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:${{ github.sha }} -n atlas
-            kubectl rollout status deployment/backend -n atlas --timeout=120s
+  # --- 7. Deploy: runs on a self-hosted runner living on the VPS itself,
+  # under the low-privilege `deploy` account (A7) -- no inbound SSH from
+  # GitHub needed at all, since the runner polls GitHub over outbound
+  # HTTPS instead of GitHub connecting in.
+  deploy:
+    needs: scan-and-build
+    if: needs.scan-and-build.result == 'success'
+    runs-on: [self-hosted, atlas-vps]
+    steps:
+      - name: Set image and wait for rollout
+        run: |
+          export KUBECONFIG=/home/deploy/.kube/config
+          kubectl set image deployment/backend backend=${{ needs.scan-and-build.outputs.image }} -n atlas
+          kubectl rollout status deployment/backend -n atlas --timeout=120s
 
-      # --- Slack notification: reports this job's own outcome, so it must be
-      # the last step -- if: always() makes it run even if an earlier step
-      # (a failed scan, a broken deploy) stopped the job early. Uses job.status,
-      # not needs.<job>.result -- that cross-job pattern isn't documented for
-      # this action; job.status is its own README example and correctly
-      # reflects this job's accumulated status by this point regardless of
-      # which earlier step failed.
+  # Reports the combined outcome of both jobs above, regardless of which one
+  # failed (or whether deploy was skipped because scan-and-build failed first).
+  notify:
+    needs: [scan-and-build, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
       - name: Notify Slack
-        if: always()
         uses: ravsamhq/notify-slack-action@2.5.0
         with:
-          status: ${{ job.status }}
+          status: ${{ (needs.scan-and-build.result == 'success' && needs.deploy.result == 'success') && 'success' || 'failure' }}
           notification_title: "{workflow} has {status_message}"
           message_format: "{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>"
           footer: "<{workflow_url}|View Workflow>"
