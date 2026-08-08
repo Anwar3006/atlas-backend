@@ -128,37 +128,47 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      # client/ is its own pnpm project (packageManager field pins the exact
+      # version, same as atlas-backend's own package.json) -- pnpm only,
+      # never npm, per AGENTS.md.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6.0.10
+        with:
+          package_json_file: client/package.json
+
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
           node-version: 22
           registry-url: https://npm.pkg.github.com
           scope: "@anwar3006"
+          cache: pnpm
+          cache-dependency-path: client/pnpm-lock.yaml
 
       - name: Install client scaffold dependencies
         working-directory: client
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Generate TypeScript client with hey-api
         working-directory: client
         env:
           OPENAPI_SPEC_URL: https://atlas-api.curiousfellow.top/openapi.json
-        run: npm run generate
+        run: pnpm run generate
 
       - name: Build
         working-directory: client
-        run: npm run build
+        run: pnpm run build
 
       # Every publish needs a unique version; tie it to the commit so mobile
       # can pin an exact backend commit's client (A12: "bumps the version
       # whenever it wants to pick up backend changes").
       - name: Set package version to commit SHA
         working-directory: client
-        run: npm version "0.0.0-${{ github.sha }}" --no-git-tag-version
+        run: pnpm version "0.0.0-${{ github.sha }}" --no-git-tag-version --no-git-checks
 
       - name: Publish to GitHub Packages
         working-directory: client
-        run: npm publish
+        run: pnpm publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

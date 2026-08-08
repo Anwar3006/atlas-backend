@@ -1,0 +1,8 @@
+# Marks this as its own pnpm project root, separate from the parent
+# atlas-backend workspace -- client/ is an independently published package,
+# not part of the backend's own build/dependency graph.
+overrides:
+  # js-yaml@4.1.1 (transitive, via @hey-api/openapi-ts ->
+  # @hey-api/json-schema-ref-parser) has two known CVEs (GHSA-52cp-r559-cp3m,
+  # GHSA-5p4m-2wfm-xmqj) fixed in 4.3.1.
+  "js-yaml@>=4.0.0 <4.3.1": "^4.3.1"
