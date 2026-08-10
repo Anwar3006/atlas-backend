@@ -60,6 +60,21 @@ COPY --from=builder --chown=hono:nodejs /app/dist ./dist
 COPY --from=builder --chown=hono:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=hono:nodejs /app/package.json ./package.json
 
+# pnpm's virtual store (node_modules/.pnpm) isn't dependency-type-aware: even
+# a from-scratch `pnpm install --prod --frozen-lockfile` (confirmed locally,
+# with an isolated store dir to rule out cache contamination) still
+# materializes every package the lockfile resolves -- prod AND dev -- onto
+# disk. Only the top-level node_modules/<pkg> symlinks and node_modules/.bin
+# are actually prod-filtered; nothing here ever imports esbuild (it's not
+# symlinked, not in .bin -- confirmed by booting the compiled app, including
+# a real sign-up hitting Postgres, against a node_modules with these entries
+# already removed), but its Go-compiled native binary ships an old Go
+# stdlib that Trivy flags as CRITICAL/HIGH. tsx/vite/vitest/drizzle-kit
+# (esbuild's only consumers here, all devDependencies) end up dead weight
+# the same way but don't carry known CVEs themselves, so only esbuild is
+# worth the removal today.
+RUN rm -rf node_modules/.pnpm/esbuild@* node_modules/.pnpm/@esbuild+* node_modules/.pnpm/@esbuild-kit+*
+
 USER hono
 
 EXPOSE 8000
