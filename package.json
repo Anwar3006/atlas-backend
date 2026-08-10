@@ -11,21 +11,26 @@
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
+    "db:migrate": "node --env-file-if-exists=.env node_modules/drizzle-kit/bin.cjs migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test": "node --env-file-if-exists=.env node_modules/vitest/vitest.mjs run",
+    "test:coverage": "node --env-file-if-exists=.env node_modules/vitest/vitest.mjs run --coverage"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@better-auth/drizzle-adapter": "^1.6.26",
+    "@better-auth/expo": "^1.6.26",
     "@hono/node-server": "^2.1.0",
     "@hono/swagger-ui": "^0.6.1",
     "@hono/zod-openapi": "^1.5.1",
+    "better-auth": "^1.6.26",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.13.0",
+    "jose": "^6.2.8",
     "postgres": "^3.4.9",
     "zod": "^4.4.3"
   },

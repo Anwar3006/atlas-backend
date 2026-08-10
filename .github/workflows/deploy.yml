@@ -19,6 +19,28 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.image.outputs.ref }}
+    # Epic 1: the auth tests write real rows (sign-up/sign-in/session), so
+    # they need a live Postgres to run against -- this runner has none by
+    # default. A throwaway container scoped to just this job, gone once the
+    # job ends; fixed local-only credentials, not touching production Postgres.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: atlas_ci
+          POSTGRES_PASSWORD: atlas_ci
+          POSTGRES_DB: atlas_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://atlas_ci:atlas_ci@localhost:5432/atlas_ci
+      BETTER_AUTH_SECRET: ci-test-secret-not-used-in-production
+      BETTER_AUTH_URL: http://localhost:8000
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -40,6 +62,12 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      # Epic 1 auth tables live only as migration files until applied --
+      # same command Story 2 documents for local dev, run here against the
+      # ephemeral postgres service above instead of a developer's machine.
+      - name: Apply database migrations
+        run: pnpm db:migrate
 
       # Tests run before any scan -- fail fast on broken code, and this is
       # also what generates coverage/lcov.info for the SonarCloud step below
