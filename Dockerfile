@@ -60,6 +60,14 @@ COPY --from=builder --chown=hono:nodejs /app/dist ./dist
 COPY --from=builder --chown=hono:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=hono:nodejs /app/package.json ./package.json
 
+# tsc only compiles .ts files -- the raw .sql migrations (and drizzle-kit's
+# meta/*.json snapshots, which src/db/migrate.ts's migrator also reads to
+# know what's already applied) need copying in separately, so dist/db/migrate.js
+# has something to read at runtime. Deploy.yml's migration step runs this
+# same image with an overridden command (`node dist/db/migrate.js`) as a
+# one-off pod before rolling out the new backend Deployment.
+COPY --from=builder --chown=hono:nodejs /app/src/db/migrations ./dist/db/migrations
+
 # pnpm's virtual store (node_modules/.pnpm) isn't dependency-type-aware: even
 # a from-scratch `pnpm install --prod --frozen-lockfile` (confirmed locally,
 # with an isolated store dir to rule out cache contamination) still

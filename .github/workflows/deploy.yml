@@ -156,6 +156,68 @@ jobs:
     if: needs.scan-and-build.result == 'success'
     runs-on: [self-hosted, atlas-vps]
     steps:
+      # Runs the just-scanned image with its command overridden to
+      # `node dist/db/migrate.js` (src/db/migrate.ts, drizzle-orm's own
+      # migrator -- not drizzle-kit, which would drag esbuild's CVE-flagged
+      # Go binary back into the image) as a one-off pod inside the cluster,
+      # before the rollout below -- new pods shouldn't start expecting a
+      # schema that isn't there yet. Runs as a real Pod (not from this
+      # runner's bare host shell) specifically so it resolves
+      # `postgres.atlas.svc.cluster.local` via the cluster's own DNS, the
+      # same way the backend Deployment itself does (A8) -- the runner
+      # process on the VPS host has no guaranteed path to that name.
+      # Needs the atlas-deploy ServiceAccount's Role to also grant
+      # pods: create/delete and pods/log: get, on top of the original
+      # deployments/replicasets/pods read-only + deployments patch/update
+      # from Epic 0 Story 5 -- a one-time `kubectl apply` on the VPS.
+      - name: Run database migrations
+        run: |
+          export KUBECONFIG=/home/deploy/.kube/config
+          POD_NAME="migrate-${{ github.sha }}"
+
+          kubectl delete pod "$POD_NAME" -n atlas --ignore-not-found --wait=true
+
+          cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: ${POD_NAME}
+            namespace: atlas
+            labels:
+              app: atlas-migrate
+          spec:
+            restartPolicy: Never
+            containers:
+              - name: migrate
+                image: ${{ needs.scan-and-build.outputs.image }}
+                command: ["node", "dist/db/migrate.js"]
+                envFrom:
+                  - secretRef:
+                      name: atlas-backend-secret
+          EOF
+
+          echo "Waiting for migration pod to finish..."
+          for i in $(seq 1 30); do
+            PHASE=$(kubectl get pod "$POD_NAME" -n atlas -o jsonpath='{.status.phase}' 2>/dev/null || echo "")
+            if [ "$PHASE" = "Succeeded" ]; then
+              kubectl logs "$POD_NAME" -n atlas
+              kubectl delete pod "$POD_NAME" -n atlas
+              echo "Migrations applied successfully."
+              exit 0
+            fi
+            if [ "$PHASE" = "Failed" ]; then
+              kubectl logs "$POD_NAME" -n atlas || true
+              kubectl delete pod "$POD_NAME" -n atlas
+              echo "Migration pod failed."
+              exit 1
+            fi
+            sleep 2
+          done
+          echo "Timed out waiting for migration pod."
+          kubectl logs "$POD_NAME" -n atlas || true
+          kubectl delete pod "$POD_NAME" -n atlas --ignore-not-found
+          exit 1
+
       - name: Set image and wait for rollout
         run: |
           export KUBECONFIG=/home/deploy/.kube/config
