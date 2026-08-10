@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { exportPKCS8, generateKeyPair, jwtVerify } from "jose";
 import { apple } from "better-auth/social-providers";
-import { generateAppleClientSecret } from "./auth.service.js";
+import { buildSocialProviders, generateAppleClientSecret } from "./auth.service.js";
 
 function fakeAppleIdToken(payload: Record<string, unknown>) {
   const base64url = (value: object) => Buffer.from(JSON.stringify(value)).toString("base64url");
@@ -46,6 +46,55 @@ describe("generateAppleClientSecret", () => {
     });
 
     await expect(jwtVerify(jwt, publicKey, { issuer: "TEAMID1234" })).resolves.toBeDefined();
+  });
+});
+
+describe("buildSocialProviders", () => {
+  it("enables neither provider when no env vars are set", async () => {
+    expect(await buildSocialProviders({})).toEqual({});
+  });
+
+  it("enables google once both its env vars are present", async () => {
+    const result = await buildSocialProviders({
+      GOOGLE_CLIENT_ID: "google-client-id",
+      GOOGLE_CLIENT_SECRET: "google-client-secret",
+    });
+
+    expect(result.google).toEqual({ clientId: "google-client-id", clientSecret: "google-client-secret" });
+    expect(result.apple).toBeUndefined();
+  });
+
+  it("leaves google disabled if only one of its two env vars is set", async () => {
+    expect(await buildSocialProviders({ GOOGLE_CLIENT_ID: "google-client-id" })).toEqual({});
+  });
+
+  it("enables apple once all four of its env vars are present", async () => {
+    const { privateKey } = await generateKeyPair("ES256", { extractable: true });
+    const pem = await exportPKCS8(privateKey);
+
+    const result = await buildSocialProviders({
+      APPLE_CLIENT_ID: "com.atlas.app.service",
+      APPLE_TEAM_ID: "TEAMID1234",
+      APPLE_KEY_ID: "KEYID5678",
+      APPLE_PRIVATE_KEY: pem,
+      APPLE_APP_BUNDLE_IDENTIFIER: "com.atlas.app",
+    });
+
+    expect(result.apple?.clientId).toBe("com.atlas.app.service");
+    expect(result.apple?.appBundleIdentifier).toBe("com.atlas.app");
+    expect(typeof result.apple?.clientSecret).toBe("string");
+    expect(result.google).toBeUndefined();
+  });
+
+  it("leaves apple disabled if any one of its four env vars is missing", async () => {
+    const result = await buildSocialProviders({
+      APPLE_CLIENT_ID: "com.atlas.app.service",
+      APPLE_TEAM_ID: "TEAMID1234",
+      APPLE_KEY_ID: "KEYID5678",
+      // APPLE_PRIVATE_KEY intentionally omitted
+    });
+
+    expect(result).toEqual({});
   });
 });
 
