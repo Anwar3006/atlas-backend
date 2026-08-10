@@ -73,3 +73,27 @@ spec:
   ports:
     - port: 5432
       targetPort: 5432
+---
+# A second, separate Service pointed at the same pods, purely so the
+# Tailscale operator has something to attach to -- its exposure mechanism
+# needs a real ClusterIP, which the headless Service above deliberately
+# doesn't have (required for the StatefulSet's stable per-pod DNS). This
+# doesn't touch the StatefulSet or its own Service at all; it's how you
+# (and only devices on your tailnet) reach production Postgres directly
+# from a local DB client, instead of a manual kubectl port-forward.
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-tailscale
+  namespace: atlas
+  labels:
+    app: postgres
+  annotations:
+    tailscale.com/expose: "true"
+    tailscale.com/hostname: atlas-postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
