@@ -95,6 +95,7 @@ jobs:
             --failOnCVSS 7
             --nvdApiKey ${{ secrets.NVD_API_KEY }}
             --disableYarnAudit
+            --suppression owasp-suppressions.xml
 
       # --- 3. SonarCloud scan ---
       # sonarcloud-github-action is deprecated; sonarqube-scan-action is its

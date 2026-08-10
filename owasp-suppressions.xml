@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+   <suppress until="2027-02-01Z">
+      <notes><![CDATA[
+      CVE-2026-53514 / GHSA-fmh4-wcc4-5jm3: unauthorized organization-invitation
+      acceptance via unverified email match in better-auth's `organization` plugin.
+      Confirmed against the advisory (github.com/better-auth/better-auth/security/
+      advisories/GHSA-fmh4-wcc4-5jm3): it explicitly requires the `organization`
+      plugin to be active. atlas-backend's src/services/auth.service.ts only
+      registers `plugins: [expo()]` -- `organization` is never imported or
+      configured anywhere in this codebase, so the vulnerable code path is
+      unreachable. No patched version fixes this for us either: the advisory's
+      patched version is 1.6.11, but the affected range resumes at >=1.6.14 under
+      some configs, so pinning to a version 12 releases behind current isn't a
+      real fix -- it would just trade this for whatever 1.6.11 lacks.
+      Re-check this suppression if/when the organization plugin is ever added
+      (tentatively Epic 12 -- Group Trip Voting).
+      ]]></notes>
+      <packageUrl regex="true">^pkg:npm/better\-auth@.*$</packageUrl>
+      <cve>CVE-2026-53514</cve>
+   </suppress>
+</suppressions>
