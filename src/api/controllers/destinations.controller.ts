@@ -6,6 +6,10 @@ import {
   listDestinations,
 } from "../../services/destinations.service.js";
 
+/**
+ * `GET /api/destinations` — lists destinations, optionally filtered by the
+ * `search` and `tag` query params.
+ */
 export async function getDestinations(c: Context) {
   // c.req.query() reads raw query params -- these two routes have no
   // request body/param schema for @hono/zod-openapi to validate against
@@ -18,6 +22,12 @@ export async function getDestinations(c: Context) {
   return c.json(results, 200);
 }
 
+/**
+ * `GET /api/destinations/trending` — top destinations by trending score.
+ * An invalid/non-numeric `limit` falls back to the service's default
+ * rather than erroring, since the route schema already rejects anything
+ * non-numeric before this runs.
+ */
 export async function getTrending(c: Context) {
   const limitParam = c.req.query("limit");
   const limit = limitParam ? Number(limitParam) : undefined;
@@ -26,6 +36,10 @@ export async function getTrending(c: Context) {
   return c.json(results, 200);
 }
 
+/**
+ * `GET /api/destinations/:id` — a single destination's detail, or a 404
+ * `HTTPException` if `id` doesn't match a row.
+ */
 export async function getDestination(c: Context) {
   // Already validated by destinations.routes.ts's `params` schema before
   // this handler runs -- same cast convention as

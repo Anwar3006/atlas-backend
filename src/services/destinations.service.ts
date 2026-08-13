@@ -25,6 +25,14 @@ const listColumns = {
   trendingScore: destinations.trendingScore,
 };
 
+/**
+ * Lists destinations, most-trending first, optionally narrowed by a
+ * free-text search (matched against name/country/description) and/or an
+ * exact tag.
+ *
+ * @param filter.search - Loose substring match, case-insensitive.
+ * @param filter.tag - Exact match against an entry in the destination's `tags` array.
+ */
 export async function listDestinations({ search, tag }: ListDestinationsFilter) {
   const conditions = [];
 
@@ -51,12 +59,22 @@ export async function listDestinations({ search, tag }: ListDestinationsFilter) 
     .orderBy(desc(destinations.trendingScore));
 }
 
+/**
+ * Returns the top destinations by trending score, descending.
+ *
+ * @param limit - Row count requested; clamped to [1, {@link MAX_TRENDING_LIMIT}].
+ */
 export async function getTrendingDestinations(limit = DEFAULT_TRENDING_LIMIT) {
   const clampedLimit = Math.min(Math.max(limit, 1), MAX_TRENDING_LIMIT);
 
   return db.select(listColumns).from(destinations).orderBy(desc(destinations.trendingScore)).limit(clampedLimit);
 }
 
+/**
+ * Fetches a single destination by id.
+ *
+ * @returns The destination, or `null` if no row matches `id`.
+ */
 export async function getDestinationById(id: string) {
   const [row] = await db.select(listColumns).from(destinations).where(eq(destinations.id, id)).limit(1);
 
