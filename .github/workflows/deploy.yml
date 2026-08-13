@@ -218,6 +218,61 @@ jobs:
           kubectl delete pod "$POD_NAME" -n atlas --ignore-not-found
           exit 1
 
+      # Same one-off-pod pattern as the migration step above, run right
+      # after it since the seed script needs the destinations table to
+      # exist. Safe to run on every deploy (A18): src/db/seed.ts's
+      # ON CONFLICT DO NOTHING against destinations' name+country unique
+      # constraint means already-seeded rows are skipped, not duplicated
+      # or errored on -- so this doesn't need to be conditioned on
+      # destinations.json having changed.
+      - name: Seed destinations
+        run: |
+          export KUBECONFIG=/home/deploy/.kube/config
+          POD_NAME="seed-${{ github.sha }}"
+
+          kubectl delete pod "$POD_NAME" -n atlas --ignore-not-found --wait=true
+
+          cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: ${POD_NAME}
+            namespace: atlas
+            labels:
+              app: atlas-seed
+          spec:
+            restartPolicy: Never
+            containers:
+              - name: seed
+                image: ${{ needs.scan-and-build.outputs.image }}
+                command: ["node", "dist/db/seed.js"]
+                envFrom:
+                  - secretRef:
+                      name: atlas-backend-secret
+          EOF
+
+          echo "Waiting for seed pod to finish..."
+          for i in $(seq 1 30); do
+            PHASE=$(kubectl get pod "$POD_NAME" -n atlas -o jsonpath='{.status.phase}' 2>/dev/null || echo "")
+            if [ "$PHASE" = "Succeeded" ]; then
+              kubectl logs "$POD_NAME" -n atlas
+              kubectl delete pod "$POD_NAME" -n atlas
+              echo "Destinations seeded successfully."
+              exit 0
+            fi
+            if [ "$PHASE" = "Failed" ]; then
+              kubectl logs "$POD_NAME" -n atlas || true
+              kubectl delete pod "$POD_NAME" -n atlas
+              echo "Seed pod failed."
+              exit 1
+            fi
+            sleep 2
+          done
+          echo "Timed out waiting for seed pod."
+          kubectl logs "$POD_NAME" -n atlas || true
+          kubectl delete pod "$POD_NAME" -n atlas --ignore-not-found
+          exit 1
+
       - name: Set image and wait for rollout
         run: |
           export KUBECONFIG=/home/deploy/.kube/config

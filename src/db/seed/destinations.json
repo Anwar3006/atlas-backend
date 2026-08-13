@@ -1,0 +1,260 @@
+[
+  {
+    "name": "Kyoto",
+    "country": "Japan",
+    "description": "Japan's former imperial capital, where centuries-old temples, bamboo groves, and geisha districts sit alongside quiet gardens built for wandering.",
+    "heroImageUrl": "https://picsum.photos/seed/kyoto-japan/1200/800",
+    "images": [
+      "https://picsum.photos/seed/kyoto-japan-1/1200/800",
+      "https://picsum.photos/seed/kyoto-japan-2/1200/800",
+      "https://picsum.photos/seed/kyoto-japan-3/1200/800"
+    ],
+    "avgRating": 4.8,
+    "priceTier": "mid-range",
+    "tags": ["culture", "city"],
+    "lat": 35.0116,
+    "lng": 135.7681,
+    "trendingScore": 92
+  },
+  {
+    "name": "Bali",
+    "country": "Indonesia",
+    "description": "Volcanic hillsides, rice terraces, and beach towns for every pace, from surf-forward Canggu to the quiet retreats around Ubud.",
+    "heroImageUrl": "https://picsum.photos/seed/bali-indonesia/1200/800",
+    "images": [
+      "https://picsum.photos/seed/bali-indonesia-1/1200/800",
+      "https://picsum.photos/seed/bali-indonesia-2/1200/800"
+    ],
+    "avgRating": 4.6,
+    "priceTier": "mid-range",
+    "tags": ["beach", "relaxation", "nature"],
+    "lat": -8.4095,
+    "lng": 115.1889,
+    "trendingScore": 88
+  },
+  {
+    "name": "Paris",
+    "country": "France",
+    "description": "Museums, riverside walks, and neighborhood bistros make this a city that rewards both a packed itinerary and an aimless afternoon.",
+    "heroImageUrl": "https://picsum.photos/seed/paris-france/1200/800",
+    "images": [
+      "https://picsum.photos/seed/paris-france-1/1200/800",
+      "https://picsum.photos/seed/paris-france-2/1200/800",
+      "https://picsum.photos/seed/paris-france-3/1200/800"
+    ],
+    "avgRating": 4.7,
+    "priceTier": "luxury",
+    "tags": ["culture", "city"],
+    "lat": 48.8566,
+    "lng": 2.3522,
+    "trendingScore": 95
+  },
+  {
+    "name": "Santorini",
+    "country": "Greece",
+    "description": "Whitewashed villages perched on volcanic cliffs above the Aegean, best known for caldera sunsets and cliffside infinity pools.",
+    "heroImageUrl": "https://picsum.photos/seed/santorini-greece/1200/800",
+    "images": [
+      "https://picsum.photos/seed/santorini-greece-1/1200/800",
+      "https://picsum.photos/seed/santorini-greece-2/1200/800"
+    ],
+    "avgRating": 4.9,
+    "priceTier": "luxury",
+    "tags": ["beach", "island", "relaxation"],
+    "lat": 36.3932,
+    "lng": 25.4615,
+    "trendingScore": 90
+  },
+  {
+    "name": "Cape Town",
+    "country": "South Africa",
+    "description": "Table Mountain, wine country, and the Atlantic coastline meet in a city built for hiking one morning and vineyards the next.",
+    "heroImageUrl": "https://picsum.photos/seed/capetown-southafrica/1200/800",
+    "images": [
+      "https://picsum.photos/seed/capetown-southafrica-1/1200/800",
+      "https://picsum.photos/seed/capetown-southafrica-2/1200/800"
+    ],
+    "avgRating": 4.5,
+    "priceTier": "mid-range",
+    "tags": ["mountains", "nature", "adventure"],
+    "lat": -33.9249,
+    "lng": 18.4241,
+    "trendingScore": 70
+  },
+  {
+    "name": "Reykjavik",
+    "country": "Iceland",
+    "description": "A compact capital that's really a gateway to glaciers, geothermal springs, and the black-sand coastline just outside it.",
+    "heroImageUrl": "https://picsum.photos/seed/reykjavik-iceland/1200/800",
+    "images": [
+      "https://picsum.photos/seed/reykjavik-iceland-1/1200/800",
+      "https://picsum.photos/seed/reykjavik-iceland-2/1200/800"
+    ],
+    "avgRating": 4.6,
+    "priceTier": "luxury",
+    "tags": ["nature", "adventure"],
+    "lat": 64.1466,
+    "lng": -21.9426,
+    "trendingScore": 65
+  },
+  {
+    "name": "Bangkok",
+    "country": "Thailand",
+    "description": "Gilded temples, floating markets, and some of the best street food anywhere, running late into the night in every neighborhood.",
+    "heroImageUrl": "https://picsum.photos/seed/bangkok-thailand/1200/800",
+    "images": [
+      "https://picsum.photos/seed/bangkok-thailand-1/1200/800",
+      "https://picsum.photos/seed/bangkok-thailand-2/1200/800"
+    ],
+    "avgRating": 4.3,
+    "priceTier": "budget",
+    "tags": ["city", "culture", "food"],
+    "lat": 13.7563,
+    "lng": 100.5018,
+    "trendingScore": 78
+  },
+  {
+    "name": "Marrakech",
+    "country": "Morocco",
+    "description": "A maze of souks and riads inside the old medina, with the Sahara's dunes and the Atlas Mountains both a day trip away.",
+    "heroImageUrl": "https://picsum.photos/seed/marrakech-morocco/1200/800",
+    "images": [
+      "https://picsum.photos/seed/marrakech-morocco-1/1200/800",
+      "https://picsum.photos/seed/marrakech-morocco-2/1200/800"
+    ],
+    "avgRating": 4.4,
+    "priceTier": "budget",
+    "tags": ["culture", "desert"],
+    "lat": 31.6295,
+    "lng": -7.9811,
+    "trendingScore": 60
+  },
+  {
+    "name": "Queenstown",
+    "country": "New Zealand",
+    "description": "The self-declared adventure capital of the world, ringed by the Remarkables and built around a lake made for every outdoor sport.",
+    "heroImageUrl": "https://picsum.photos/seed/queenstown-newzealand/1200/800",
+    "images": [
+      "https://picsum.photos/seed/queenstown-newzealand-1/1200/800",
+      "https://picsum.photos/seed/queenstown-newzealand-2/1200/800"
+    ],
+    "avgRating": 4.8,
+    "priceTier": "luxury",
+    "tags": ["mountains", "adventure"],
+    "lat": -45.0312,
+    "lng": 168.6626,
+    "trendingScore": 55
+  },
+  {
+    "name": "Lisbon",
+    "country": "Portugal",
+    "description": "Tiled facades, hillside miradouros, and a tram system that doubles as a sightseeing tour, with beach towns a short train ride away.",
+    "heroImageUrl": "https://picsum.photos/seed/lisbon-portugal/1200/800",
+    "images": [
+      "https://picsum.photos/seed/lisbon-portugal-1/1200/800",
+      "https://picsum.photos/seed/lisbon-portugal-2/1200/800"
+    ],
+    "avgRating": 4.5,
+    "priceTier": "mid-range",
+    "tags": ["city", "culture", "beach"],
+    "lat": 38.7223,
+    "lng": -9.1393,
+    "trendingScore": 72
+  },
+  {
+    "name": "Cusco",
+    "country": "Peru",
+    "description": "The old Incan capital and the launch point for Machu Picchu, high in the Andes with cobblestone streets built on Incan foundations.",
+    "heroImageUrl": "https://picsum.photos/seed/cusco-peru/1200/800",
+    "images": [
+      "https://picsum.photos/seed/cusco-peru-1/1200/800",
+      "https://picsum.photos/seed/cusco-peru-2/1200/800"
+    ],
+    "avgRating": 4.9,
+    "priceTier": "mid-range",
+    "tags": ["mountains", "culture", "adventure"],
+    "lat": -13.5319,
+    "lng": -71.9675,
+    "trendingScore": 50
+  },
+  {
+    "name": "New York City",
+    "country": "United States",
+    "description": "Every neighborhood is its own city -- world-class museums, theater, and food from everywhere, running on almost no sleep.",
+    "heroImageUrl": "https://picsum.photos/seed/newyork-usa/1200/800",
+    "images": [
+      "https://picsum.photos/seed/newyork-usa-1/1200/800",
+      "https://picsum.photos/seed/newyork-usa-2/1200/800"
+    ],
+    "avgRating": 4.4,
+    "priceTier": "luxury",
+    "tags": ["city", "culture"],
+    "lat": 40.7128,
+    "lng": -74.006,
+    "trendingScore": 85
+  },
+  {
+    "name": "Zanzibar",
+    "country": "Tanzania",
+    "description": "Powder-white beaches and turquoise water off the Swahili coast, with Stone Town's spice markets a short trip inland.",
+    "heroImageUrl": "https://picsum.photos/seed/zanzibar-tanzania/1200/800",
+    "images": [
+      "https://picsum.photos/seed/zanzibar-tanzania-1/1200/800",
+      "https://picsum.photos/seed/zanzibar-tanzania-2/1200/800"
+    ],
+    "avgRating": 4.6,
+    "priceTier": "budget",
+    "tags": ["beach", "island"],
+    "lat": -6.1659,
+    "lng": 39.2026,
+    "trendingScore": 45
+  },
+  {
+    "name": "Interlaken",
+    "country": "Switzerland",
+    "description": "Wedged between two lakes under the Jungfrau, and the base camp for paragliding, hiking, and glacier trips into the Alps.",
+    "heroImageUrl": "https://picsum.photos/seed/interlaken-switzerland/1200/800",
+    "images": [
+      "https://picsum.photos/seed/interlaken-switzerland-1/1200/800",
+      "https://picsum.photos/seed/interlaken-switzerland-2/1200/800"
+    ],
+    "avgRating": 4.7,
+    "priceTier": "luxury",
+    "tags": ["mountains", "nature", "adventure"],
+    "lat": 46.6863,
+    "lng": 7.8632,
+    "trendingScore": 58
+  },
+  {
+    "name": "Hoi An",
+    "country": "Vietnam",
+    "description": "A lantern-lit riverside town of tailor shops and century-old merchant houses, with an easy bike ride out to the beach.",
+    "heroImageUrl": "https://picsum.photos/seed/hoian-vietnam/1200/800",
+    "images": [
+      "https://picsum.photos/seed/hoian-vietnam-1/1200/800",
+      "https://picsum.photos/seed/hoian-vietnam-2/1200/800"
+    ],
+    "avgRating": 4.7,
+    "priceTier": "budget",
+    "tags": ["culture", "city", "beach"],
+    "lat": 15.8801,
+    "lng": 108.338,
+    "trendingScore": 40
+  },
+  {
+    "name": "Dubai",
+    "country": "United Arab Emirates",
+    "description": "Record-setting towers and man-made islands rising out of the desert, with souks and dune safaris still close by.",
+    "heroImageUrl": "https://picsum.photos/seed/dubai-uae/1200/800",
+    "images": [
+      "https://picsum.photos/seed/dubai-uae-1/1200/800",
+      "https://picsum.photos/seed/dubai-uae-2/1200/800"
+    ],
+    "avgRating": 4.5,
+    "priceTier": "luxury",
+    "tags": ["city", "luxury"],
+    "lat": 25.2048,
+    "lng": 55.2708,
+    "trendingScore": 80
+  }
+]

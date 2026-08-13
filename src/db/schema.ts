@@ -1,5 +1,15 @@
 import { randomUUID } from "node:crypto";
-import { boolean, integer, jsonb, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  doublePrecision,
+  integer,
+  jsonb,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+} from "drizzle-orm/pg-core";
 
 // better-auth's own core tables (A11: `onboardingCompleted` is the one
 // project-specific addition, via better-auth's "additional fields" feature
@@ -81,3 +91,39 @@ export const userPreferences = pgTable("user_preferences", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+// Epic 3 (A18): no admin panel, so this table is populated by
+// src/db/seed.ts from a hand-curated JSON file rather than user input.
+// `priceTier` is a real enum for the same reason `travelPace` above is --
+// a small, stable, closed set worth a DB-level guarantee. `tags` stays
+// loose jsonb (like `interests` above) since the mobile app's quick-filter
+// chips are the actual source of truth for valid values.
+export const priceTierEnum = pgEnum("price_tier", ["budget", "mid-range", "luxury"]);
+
+export const destinations = pgTable(
+  "destinations",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    name: text("name").notNull(),
+    country: text("country").notNull(),
+    description: text("description").notNull(),
+    heroImageUrl: text("hero_image_url").notNull(),
+    images: jsonb("images").$type<string[]>().notNull().default([]),
+    avgRating: doublePrecision("avg_rating").notNull().default(0),
+    priceTier: priceTierEnum("price_tier").notNull(),
+    tags: jsonb("tags").$type<string[]>().notNull().default([]),
+    lat: doublePrecision("lat").notNull(),
+    lng: doublePrecision("lng").notNull(),
+    trendingScore: integer("trending_score").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  // The seed script's idempotency key (A18: rerunning it must only insert
+  // destinations it doesn't already have) -- name+country is the natural
+  // real-world identity for a curated destination list, so it's what
+  // ON CONFLICT DO NOTHING targets instead of adding a synthetic slug
+  // column just for this.
+  (table) => [unique("destinations_name_country_unique").on(table.name, table.country)],
+);

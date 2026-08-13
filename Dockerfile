@@ -68,6 +68,12 @@ COPY --from=builder --chown=hono:nodejs /app/package.json ./package.json
 # one-off pod before rolling out the new backend Deployment.
 COPY --from=builder --chown=hono:nodejs /app/src/db/migrations ./dist/db/migrations
 
+# Same reasoning as the migrations COPY above: tsc doesn't compile the seed
+# script's data file, and deploy.yml's seed step (Story 5) runs this image
+# with an overridden command (`node dist/db/seed.js`), same one-off-pod
+# pattern as the migration step.
+COPY --from=builder --chown=hono:nodejs /app/src/db/seed/destinations.json ./dist/db/seed/destinations.json
+
 # pnpm's virtual store (node_modules/.pnpm) isn't dependency-type-aware: even
 # a from-scratch `pnpm install --prod --frozen-lockfile` (confirmed locally,
 # with an isolated store dir to rule out cache contamination) still
