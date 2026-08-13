@@ -1,6 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
 import { logger } from "hono/logger";
+import { destinationsRoutes } from "./api/routes/destinations.routes.js";
 import { healthRoutes } from "./api/routes/health.routes.js";
 import { meRoutes } from "./api/routes/me.routes.js";
 import { preferencesRoutes } from "./api/routes/preferences.routes.js";
@@ -21,6 +22,7 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
 app.route("/api/me", meRoutes);
 app.route("/api/preferences", preferencesRoutes);
+app.route("/api/destinations", destinationsRoutes);
 
 // A6: the OpenAPI spec is generated from the same Zod schemas each route
 // already validates against, so the docs can't drift out of sync with the
